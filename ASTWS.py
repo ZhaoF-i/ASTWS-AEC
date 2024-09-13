@@ -178,24 +178,6 @@ class NET(nn.Module):
         y = y.reshape(b, m_out, y.shape[-1])
         return y
 
-    # def wiener_solution(self, far, mix, k):
-    #     # shape: B, C, F, T
-    #     far_complex = torch.complex(far[:, 0], far[:, 1])
-    #     mix_complex = torch.complex(mix[:, 0], mix[:, 1])
-    #     far_complex_padded = torch.nn.functional.pad(far_complex, (k - 1, 0))
-    #     # 执行 unfold 操作，设置 size 参数为 (F, 4)，即 T+3 维度展开为大小为 4 的窗口
-    #     far_complex_unfolded = far_complex_padded.unfold(2, k, 1)
-    #
-    #     X_transpose = torch.transpose(torch.conj(far_complex_unfolded.unsqueeze(-2)), -1, -2)
-    #     XTX = torch.matmul(X_transpose, far_complex_unfolded.unsqueeze(-2))
-    #     XTY = torch.matmul(X_transpose, mix_complex.unsqueeze(-1).unsqueeze(-1))
-    #     # inver_XTX = XTX # torch.linalg.pinv(XTX)
-    #     inver_XTX = torch.linalg.pinv(XTX)
-    #     WienerSolution = torch.matmul(inver_XTX, XTY).squeeze(-1)
-    #     WienerSolution = torch.stack([WienerSolution.real, WienerSolution.imag], dim=1)
-    #
-    #     return WienerSolution.permute(0, 1, 4, 2, 3)
-
     def forward(self, x):
         # x:[batch, channel, frequency, time]
         X0 = self.stft(x)
@@ -214,10 +196,6 @@ class NET(nn.Module):
 
         d0 = self.out_ch_lstm(torch.cat([e0, d1], dim=1))
         out = self.out_conv(torch.cat([d0, d1], dim=1))
-        # b, c, f, t = Y.shape
-        # estEchoPath = Y.reshape(Y.shape[0], 2, self.order, Y.shape[2], Y.shape[3])
-        # estEchoPath = self.linear(torch.cat([estEchoPath, Wiener_Solution], dim=2).permute(0,1,3,4,2)).permute(0,1,4,2,3)
-        # out = mix_comp - multiply_orders_(far_comp, estEchoPath, self.order)
 
         y = self.istft(out, t=x.shape[-1])[:, 0]
         # far = self.istft(far_comp, t=x.shape[-1])[:, 0]
